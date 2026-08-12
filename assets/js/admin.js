@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 1. AUTENTIKASI (LOGIN & LOGOUT)
     // ==========================================
     async function checkUserStatus() {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
             // Jika sudah login, tampilkan dashboard
             loginSection.style.display = "none";
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const errorMsg = document.getElementById("login-error");
 
         loginBtn.innerText = "Loading...";
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
             email: email,
             password: password,
         });
@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     logoutBtn.addEventListener("click", async () => {
-        await supabase.auth.signOut();
+        await supabaseClient.auth.signOut();
         checkUserStatus();
     });
 
@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 2. CRUD: READ (Menampilkan Data di Tabel)
     // ==========================================
     async function loadAdminProjects() {
-        const { data: projects, error } = await supabase
+        const { data: projects, error } = await supabaseClient
             .from('projects')
             .select('*')
             .order('created_at', { ascending: false });
@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (id) {
             // Mode UPDATE (Edit)
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('projects')
                 .update({ title, description, image_url: imageUrl, link })
                 .eq('id', id);
@@ -117,7 +117,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (!error) alert("Berhasil diubah!");
         } else {
             // Mode CREATE (Tambah Baru)
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('projects')
                 .insert([{ title, description, image_url: imageUrl, link, project_date: new Date() }]);
             
@@ -136,7 +136,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const confirmDelete = confirm("Apakah kamu yakin ingin menghapus projek ini?");
         if (!confirmDelete) return;
 
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('projects')
             .delete()
             .eq('id', id);
@@ -170,7 +170,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Fungsi untuk mengisi form saat tombol EDIT diklik
     window.editProject = async function(id) {
         // Ambil data spesifik dari Supabase
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('projects')
             .select('*')
             .eq('id', id)

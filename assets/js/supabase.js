@@ -7,13 +7,13 @@ const SUPABASE_URL = 'https://abdohhshnzhiwkbvbnzd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiZG9oaHNobnpoaXdrYnZibnpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1MzQ0NTIsImV4cCI6MjEwMjExMDQ1Mn0.wzoU84mEf0gywIqIXGK7PQ_7shHWkCg7I62RvZpHMJU';
 
 // Inisialisasi Supabase Client (hanya jalan jika key sudah diisi)
-let supabase;
+let supabaseClient;
 if (SUPABASE_URL && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE') {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    if (!supabase) {
+    if (!supabaseClient) {
         console.warn("⚠️ Supabase belum dikonfigurasi. Menampilkan data dummy untuk sementara.");
         return;
     }
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Fungsi untuk mengambil data projek
 async function fetchProjects() {
     try {
-        const { data: projects, error } = await supabase
+        const { data: projects, error } = await supabaseClient
             .from('projects')
             .select('*')
             .order('project_date', { ascending: false });
@@ -58,7 +58,7 @@ async function fetchProjects() {
 // Fungsi untuk mengambil data galeri foto
 async function fetchGallery() {
     try {
-        const { data: gallery, error } = await supabase
+        const { data: gallery, error } = await supabaseClient
             .from('activities_gallery')
             .select('*')
             .order('created_at', { ascending: false });
