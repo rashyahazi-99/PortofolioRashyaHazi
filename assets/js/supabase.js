@@ -3,12 +3,12 @@
 // ==========================================
 
 // ⚠️ Ganti dengan URL dan ANON KEY dari project Supabase kamu
-const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
+const SUPABASE_URL = 'https://abdohhshnzhiwkbvbnzd.supabase.co';
 const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
 
 // Inisialisasi Supabase Client (hanya jalan jika key sudah diisi)
 let supabase;
-if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+if (SUPABASE_URL !== 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiZG9oaHNobnpoaXdrYnZibnpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1MzQ0NTIsImV4cCI6MjEwMjExMDQ1Mn0.wzoU84mEf0gywIqIXGK7PQ_7shHWkCg7I62RvZpHMJU') {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }
 
