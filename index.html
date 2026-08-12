@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Portofolio Resmi Rashya Hazimulfikri Widyadhana - Komputer Desain Grafis & Kesehatan">
+    <title>Rashya Hazimulfikri | Portofolio</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">Rashya.<span>Dev</span></a>
+            <ul class="nav-links">
+                <li><a href="#home" data-i18n="nav_home">Beranda</a></li>
+                <li><a href="#about" data-i18n="nav_about">Tentang</a></li>
+                <li><a href="#projects" data-i18n="nav_projects">Projek</a></li>
+                <li><a href="#gallery" data-i18n="nav_gallery">Galeri</a></li>
+                <li><a href="#contact" data-i18n="nav_contact">Kontak</a></li>
+            </ul>
+            <div class="nav-toggles">
+                <button id="theme-toggle" class="icon-btn" aria-label="Toggle Theme">🌙</button>
+                <button id="lang-toggle" class="icon-btn" aria-label="Toggle Language">ID</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section id="home" class="hero-section">
+        <div class="container hero-content">
+            <div class="hero-text">
+                <p class="greeting" data-i18n="hero_greeting">Halo, kenalkan nama saya</p>
+                <h1>Rashya Hazimulfikri</h1>
+                <h2 class="role" data-i18n="hero_role">Siswa Komputer Desain Grafis & Kesehatan</h2>
+                <p class="bio-short" data-i18n="hero_bio">Saya berasal dari Cianjur, alumni SMK NURULFALAH, Cikalong Kulon. Senang bereksplorasi dengan desain dan alam.</p>
+                <div class="hero-cta">
+                    <a href="#projects" class="btn btn-primary" data-i18n="btn_projects">Lihat Projek</a>
+                    <a href="#contact" class="btn btn-outline" data-i18n="btn_contact">Hubungi Saya</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="./Rashya.jpeg" alt="Foto Profil Rashya Hazimulfikri Widyadhana">
+            </div>
+        </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section id="about" class="about-section">
+        <div class="container">
+            <h2 class="section-title"><span data-i18n="about_title_1">Tentang</span> <span data-i18n="about_title_2">Saya</span></h2>
+            <div class="about-grid">
+                <div class="about-desc fade-in">
+                    <h3 data-i18n="about_subtitle">Kenal Lebih Dekat</h3>
+                    <p data-i18n="about_text">Perkenalkan, nama saya Rashya Hazimulfikri Widyadhana. Saya memiliki minat besar di bidang komputer desain grafis dan juga latar belakang di bidang kesehatan. Saya selalu antusias mempelajari hal baru dan menghadapi tantangan.</p>
+                </div>
+                
+                <div class="skills-hobbies fade-in">
+                    <div class="card glass-card">
+                        <h3 data-i18n="skills_title">Keahlian</h3>
+                        <ul id="skills-list">
+                            <li data-i18n="skill_1">Desain Grafis</li>
+                            <li data-i18n="skill_2">Kesehatan</li>
+                        </ul>
+                    </div>
+                    <div class="card glass-card">
+                        <h3 data-i18n="hobbies_title">Hobi</h3>
+                        <ul id="hobbies-list">
+                            <li data-i18n="hobby_1">Masak</li>
+                            <li data-i18n="hobby_2">Bermain / Menjelajahi Alam</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PROJECTS SECTION -->
+    <section id="projects" class="projects-section">
+        <div class="container">
+            <h2 class="section-title"><span data-i18n="projects_title_1">Projek</span> <span data-i18n="projects_title_2">Terbaru</span></h2>
+            <div class="projects-grid" id="projects-container">
+                <!-- Placeholder untuk projek -->
+                <div class="project-card glass-card fade-in">
+                    <div class="project-img-placeholder"></div>
+                    <div class="project-info">
+                        <h3>Desain Poster A</h3>
+                        <p>Deskripsi singkat mengenai projek desain poster ini.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- GALLERY SECTION -->
+    <section id="gallery" class="gallery-section">
+        <div class="container">
+            <h2 class="section-title"><span data-i18n="gallery_title_1">Galeri</span> <span data-i18n="gallery_title_2">Kegiatan</span></h2>
+            <div class="gallery-grid" id="gallery-container">
+                <!-- Placeholder untuk foto kegiatan -->
+                <div class="gallery-item glass-card fade-in">
+                    <div class="gallery-img-placeholder"></div>
+                    <p>Menjelajahi Alam</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT & FOOTER SECTION -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <h2 class="section-title"><span data-i18n="contact_title_1">Mari</span> <span data-i18n="contact_title_2">Terhubung</span></h2>
+            <div class="contact-content glass-card fade-in">
+                <p data-i18n="contact_text">Punya ide projek atau sekedar ingin menyapa? Jangan ragu untuk menghubungi saya!</p>
+                <a href="https://www.instagram.com/dhant_cxzv" target="_blank" rel="noopener noreferrer" class="btn btn-primary" data-i18n="contact_btn">
+                    Kunjungi Instagram Saya
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Rashya Hazimulfikri Widyadhana. <span data-i18n="footer_text">Dibuat dengan ❤️</span></p>
+    </footer>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Custom JS -->
+    <script src="./assets/js/supabase.js"></script>
+    <script src="./assets/js/main.js"></script>
+</body>
+</html>
