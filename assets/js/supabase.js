@@ -21,6 +21,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.log("Menghubungkan ke Supabase...");
     await fetchProjects();
     await fetchGallery();
+    
+    // Inisialisasi ulang animasi agar elemen baru dari Supabase dikenali
+    if (typeof window.initScrollAnimations === "function") {
+        window.initScrollAnimations();
+    }
 });
 
 // Fungsi untuk mengambil data projek

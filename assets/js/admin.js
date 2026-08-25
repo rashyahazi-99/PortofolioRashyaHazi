@@ -1,14 +1,13 @@
 /**
- * ADMIN.JS - Logika CRUD & Autentikasi untuk Halaman Admin
+ * ADMIN.JS - Logika CRUD, UI Dashboard, & Autentikasi untuk Halaman Admin
  */
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // Referensi Elemen UI
+    // Referensi Elemen UI Login & Admin
     const loginSection = document.getElementById("login-section");
     const adminSection = document.getElementById("admin-section");
     const loginBtn = document.getElementById("btn-login");
     const logoutBtn = document.getElementById("btn-logout");
-    const saveProjectBtn = document.getElementById("btn-save-project");
     
     // Cek Status Login Saat Halaman Dimuat
     checkUserStatus();
@@ -19,16 +18,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     async function checkUserStatus() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
-            // Jika sudah login, tampilkan dashboard
             loginSection.style.display = "none";
-            adminSection.style.display = "block";
-            document.body.style.justifyContent = "flex-start"; // Perbaiki layout
-            loadAdminProjects(); // Muat data tabel
+            adminSection.style.display = "flex"; // Menggunakan flex karena layout dashboard
+            loadAllData(); // Muat semua data ke dashboard
         } else {
-            // Jika belum login, tampilkan form login
-            loginSection.style.display = "block";
+            loginSection.style.display = "flex";
             adminSection.style.display = "none";
-            document.body.style.justifyContent = "center";
         }
     }
 
@@ -60,133 +55,293 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     // ==========================================
-    // 2. CRUD: READ (Menampilkan Data di Tabel)
+    // 2. NAVIGASI TAB SIDEBAR
     // ==========================================
-    async function loadAdminProjects() {
-        const { data: projects, error } = await supabaseClient
-            .from('projects')
-            .select('*')
-            .order('created_at', { ascending: false });
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const pageTitle = document.getElementById('page-title');
 
-        if (error) {
-            console.error("Gagal memuat data:", error);
-            return;
+    navTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Hilangkan status aktif dari semua tab
+            navTabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            
+            // Tambahkan status aktif ke tab yang diklik
+            tab.classList.add('active');
+            
+            // Munculkan konten yang sesuai
+            const target = tab.getAttribute('data-target');
+            document.getElementById(target).classList.add('active');
+            
+            // Ubah judul navbar
+            pageTitle.innerText = tab.innerText.replace(/[^\w\s]/gi, '').trim();
+        });
+    });
+
+    // ==========================================
+    // 3. LOAD SEMUA DATA
+    // ==========================================
+    function loadAllData() {
+        loadPersonalInfo();
+        loadSkillsHobbies();
+        loadProjects();
+        loadGallery();
+    }
+
+    // --- A. TAB PROFIL ---
+    async function loadPersonalInfo() {
+        const { data, error } = await supabaseClient.from('personal_info').select('*').limit(1).single();
+        if (data) {
+            document.getElementById("prof-name").value = data.full_name || "";
+            document.getElementById("prof-tagline").value = data.taglines || "";
+            document.getElementById("prof-bio-short").value = data.bio_description || "";
+            document.getElementById("prof-img").value = data.profile_image_url || "";
+            document.getElementById("prof-ig").value = data.instagram_url || "";
         }
+    }
 
-        const tableBody = document.getElementById("admin-projects-table");
-        tableBody.innerHTML = ""; // Bersihkan tabel
+    document.getElementById("btn-save-profil").addEventListener("click", async () => {
+        const btn = document.getElementById("btn-save-profil");
+        btn.innerText = "Menyimpan...";
+        
+        const updates = {
+            full_name: document.getElementById("prof-name").value,
+            taglines: document.getElementById("prof-tagline").value,
+            bio_description: document.getElementById("prof-bio-short").value,
+            profile_image_url: document.getElementById("prof-img").value,
+            instagram_url: document.getElementById("prof-ig").value
+        };
 
-        projects.forEach(project => {
+        // Asumsikan kita punya 1 baris di tabel dengan ID tertentu, kita bisa coba insert atau update
+        // (Untuk kesederhanaan, kita bisa asumsikan baris pertama sudah ada, atau kita ambil ID-nya)
+        const { data: existingData } = await supabaseClient.from('personal_info').select('id').limit(1).single();
+        
+        if (existingData) {
+            await supabaseClient.from('personal_info').update(updates).eq('id', existingData.id);
+        } else {
+            await supabaseClient.from('personal_info').insert([updates]);
+        }
+        
+        btn.innerText = "Simpan Profil";
+        alert("Profil berhasil diperbarui!");
+    });
+
+    // --- B. TAB KEAHLIAN & HOBI ---
+    async function loadSkillsHobbies() {
+        const { data, error } = await supabaseClient.from('skills_and_hobbies').select('*');
+        if (error || !data) return;
+
+        const tableSkills = document.getElementById("table-skills");
+        const tableHobbies = document.getElementById("table-hobbies");
+        tableSkills.innerHTML = ""; tableHobbies.innerHTML = "";
+
+        data.forEach(item => {
             const tr = document.createElement("tr");
             tr.innerHTML = `
-                <td><strong>${project.title}</strong></td>
-                <td>${project.description ? project.description.substring(0, 50) + "..." : "-"}</td>
+                <td>${item.name}</td>
+                <td style="text-align:right;"><button class="action-btn btn-delete" onclick="deleteItem('skills_and_hobbies', '${item.id}')">Hapus</button></td>
+            `;
+            if (item.type === 'skill') tableSkills.appendChild(tr);
+            else tableHobbies.appendChild(tr);
+        });
+    }
+
+    // --- C. TAB PROJEK ---
+    async function loadProjects() {
+        const { data, error } = await supabaseClient.from('projects').select('*').order('created_at', { ascending: false });
+        if (error || !data) return;
+
+        document.getElementById("count-projects").innerText = data.length;
+        const tbody = document.getElementById("table-projects");
+        tbody.innerHTML = "";
+
+        data.forEach(project => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><img src="${project.image_url}" alt="Img" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;"></td>
+                <td><strong>${project.title}</strong><br><small>${project.description ? project.description.substring(0, 30) + '...' : ''}</small></td>
                 <td>
-                    <button class="action-btn btn-edit" onclick="editProject('${project.id}')">Edit</button>
-                    <button class="action-btn btn-delete" onclick="deleteProject('${project.id}')">Hapus</button>
+                    <button class="action-btn btn-edit" onclick="editItem('project', '${project.id}')">Edit</button>
+                    <button class="action-btn btn-delete" onclick="deleteItem('projects', '${project.id}')">Hapus</button>
                 </td>
             `;
-            tableBody.appendChild(tr);
+            tbody.appendChild(tr);
+        });
+    }
+
+    // --- D. TAB GALERI ---
+    async function loadGallery() {
+        const { data, error } = await supabaseClient.from('activities_gallery').select('*').order('created_at', { ascending: false });
+        if (error || !data) return;
+
+        document.getElementById("count-gallery").innerText = data.length;
+        const tbody = document.getElementById("table-gallery");
+        tbody.innerHTML = "";
+
+        data.forEach(gal => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><img src="${gal.image_url}" alt="Img" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;"></td>
+                <td>${gal.title}</td>
+                <td>
+                    <button class="action-btn btn-edit" onclick="editItem('gallery', '${gal.id}')">Edit</button>
+                    <button class="action-btn btn-delete" onclick="deleteItem('activities_gallery', '${gal.id}')">Hapus</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
     }
 
     // ==========================================
-    // 3. CRUD: CREATE & UPDATE (Simpan Data)
+    // 4. MODAL DINAMIS & CREATE/DELETE UMUM
     // ==========================================
-    saveProjectBtn.addEventListener("click", async () => {
-        const id = document.getElementById("project-id").value; // Jika ada ID, berarti mode EDIT
-        const title = document.getElementById("project-title").value;
-        const description = document.getElementById("project-desc").value;
-        const imageUrl = document.getElementById("project-img").value;
-        const link = document.getElementById("project-link").value;
+    const dynamicModal = document.getElementById("dynamic-modal");
+    const modalTitle = document.getElementById("modal-title");
+    const modalBody = document.getElementById("modal-body");
+    const modalId = document.getElementById("modal-id");
 
-        if (!title || !imageUrl) {
-            alert("Judul dan URL Gambar wajib diisi!");
-            return;
+    window.openModal = function(type) {
+        modalId.value = ""; // Reset ID untuk mode Tambah
+        if (type === 'skill') {
+            modalTitle.innerText = "Tambah Keahlian / Hobi";
+            modalBody.innerHTML = `
+                <div class="form-group"><label>Tipe</label>
+                    <select id="modal-type" class="form-control" style="background:#111;">
+                        <option value="skill">Keahlian (Skill)</option><option value="hobby">Hobi (Hobby)</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Nama</label><input type="text" id="modal-name" class="form-control"></div>
+                <button class="btn btn-primary" style="width:100%" onclick="saveNewItem('skill')">Simpan</button>
+            `;
+        } else if (type === 'project') {
+            modalTitle.innerText = "Tambah Projek Baru";
+            modalBody.innerHTML = `
+                <div class="form-group"><label>Judul</label><input type="text" id="modal-title-input" class="form-control"></div>
+                <div class="form-group"><label>Deskripsi</label><textarea id="modal-desc" class="form-control" rows="3"></textarea></div>
+                <div class="form-group"><label>Upload Gambar Baru (Kosongkan jika tidak diubah)</label><input type="file" id="modal-img-file" accept="image/*" class="form-control" style="background: rgba(0,0,0,0.4)"></div>
+                <div class="form-group"><label>Link Projek (Opsional)</label><input type="text" id="modal-link" class="form-control"></div>
+                <input type="hidden" id="modal-existing-img">
+                <button id="btn-modal-save" class="btn btn-primary" style="width:100%" onclick="saveNewItem('project')">Simpan Projek</button>
+            `;
+        } else if (type === 'gallery') {
+            modalTitle.innerText = "Tambah Foto Galeri";
+            modalBody.innerHTML = `
+                <div class="form-group"><label>Keterangan Foto</label><input type="text" id="modal-title-input" class="form-control"></div>
+                <div class="form-group"><label>Upload Gambar Baru (Kosongkan jika tidak diubah)</label><input type="file" id="modal-img-file" accept="image/*" class="form-control" style="background: rgba(0,0,0,0.4)"></div>
+                <input type="hidden" id="modal-existing-img">
+                <button id="btn-modal-save" class="btn btn-primary" style="width:100%" onclick="saveNewItem('gallery')">Simpan Foto</button>
+            `;
         }
-
-        saveProjectBtn.innerText = "Menyimpan...";
-
-        if (id) {
-            // Mode UPDATE (Edit)
-            const { error } = await supabaseClient
-                .from('projects')
-                .update({ title, description, image_url: imageUrl, link })
-                .eq('id', id);
-            
-            if (!error) alert("Berhasil diubah!");
-        } else {
-            // Mode CREATE (Tambah Baru)
-            const { error } = await supabaseClient
-                .from('projects')
-                .insert([{ title, description, image_url: imageUrl, link, project_date: new Date() }]);
-            
-            if (!error) alert("Berhasil ditambahkan!");
-        }
-
-        saveProjectBtn.innerText = "Simpan Projek";
-        closeModal();
-        loadAdminProjects(); // Refresh tabel
-    });
-
-    // ==========================================
-    // 4. CRUD: DELETE (Hapus Data)
-    // ==========================================
-    window.deleteProject = async function(id) {
-        const confirmDelete = confirm("Apakah kamu yakin ingin menghapus projek ini?");
-        if (!confirmDelete) return;
-
-        const { error } = await supabaseClient
-            .from('projects')
-            .delete()
-            .eq('id', id);
-
-        if (error) {
-            alert("Gagal menghapus: " + error.message);
-        } else {
-            loadAdminProjects(); // Refresh tabel
-        }
-    }
-
-    // ==========================================
-    // 5. MODAL CONTROL (Fungsi Buka/Tutup Pop-up)
-    // ==========================================
-    window.openModal = function(mode = 'project') {
-        // Kosongkan form
-        document.getElementById("project-id").value = "";
-        document.getElementById("project-title").value = "";
-        document.getElementById("project-desc").value = "";
-        document.getElementById("project-img").value = "";
-        document.getElementById("project-link").value = "";
-        
-        document.getElementById("modal-title").innerText = "Tambah Projek Baru";
-        document.getElementById("project-modal").style.display = "flex";
-    }
+        dynamicModal.style.display = "flex";
+    };
 
     window.closeModal = function() {
-        document.getElementById("project-modal").style.display = "none";
+        dynamicModal.style.display = "none";
+    };
+
+    async function uploadImage(file) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const { error } = await supabaseClient.storage.from('portfolio-images').upload(fileName, file);
+        if (error) {
+            alert("Upload gagal: " + error.message);
+            return null;
+        }
+        const { data } = supabaseClient.storage.from('portfolio-images').getPublicUrl(fileName);
+        return data.publicUrl;
     }
 
-    // Fungsi untuk mengisi form saat tombol EDIT diklik
-    window.editProject = async function(id) {
-        // Ambil data spesifik dari Supabase
-        const { data, error } = await supabaseClient
-            .from('projects')
-            .select('*')
-            .eq('id', id)
-            .single();
-            
-        if (error || !data) return;
+    window.saveNewItem = async function(type) {
+        let errorMsg = null;
+        const id = modalId.value; // Jika ada, berarti Edit Mode
 
-        // Isi form dengan data lama
-        document.getElementById("project-id").value = data.id;
-        document.getElementById("project-title").value = data.title;
-        document.getElementById("project-desc").value = data.description;
-        document.getElementById("project-img").value = data.image_url;
-        document.getElementById("project-link").value = data.link || "";
+        if (type === 'skill') {
+            const name = document.getElementById("modal-name").value;
+            const t = document.getElementById("modal-type").value;
+            if(!name) return alert("Nama wajib diisi!");
+            const { error } = id ? 
+                await supabaseClient.from('skills_and_hobbies').update({ name, type: t }).eq('id', id) : 
+                await supabaseClient.from('skills_and_hobbies').insert([{ name, type: t }]);
+            errorMsg = error;
+        } else if (type === 'project' || type === 'gallery') {
+            const btnSave = document.getElementById("btn-modal-save");
+            btnSave.innerText = "Sedang Mengunggah...";
+            btnSave.disabled = true;
 
-        document.getElementById("modal-title").innerText = "Edit Projek";
-        document.getElementById("project-modal").style.display = "flex";
-    }
+            let finalImgUrl = document.getElementById("modal-existing-img")?.value || "";
+            const fileInput = document.getElementById("modal-img-file");
+
+            if (fileInput && fileInput.files.length > 0) {
+                const uploadedUrl = await uploadImage(fileInput.files[0]);
+                if (!uploadedUrl) {
+                    btnSave.innerText = "Simpan";
+                    btnSave.disabled = false;
+                    return; // Gagal upload
+                }
+                finalImgUrl = uploadedUrl;
+            }
+
+            if (!finalImgUrl) {
+                btnSave.innerText = "Simpan";
+                btnSave.disabled = false;
+                return alert("Gambar wajib diisi/diupload!");
+            }
+
+            if (type === 'project') {
+                const title = document.getElementById("modal-title-input").value;
+                const desc = document.getElementById("modal-desc").value;
+                const link = document.getElementById("modal-link").value;
+                if(!title) { btnSave.innerText = "Simpan Projek"; btnSave.disabled = false; return alert("Judul wajib diisi!"); }
+                
+                const { error } = id ? 
+                    await supabaseClient.from('projects').update({ title, description: desc, image_url: finalImgUrl, link }).eq('id', id) : 
+                    await supabaseClient.from('projects').insert([{ title, description: desc, image_url: finalImgUrl, link }]);
+                errorMsg = error;
+            } else {
+                const title = document.getElementById("modal-title-input").value;
+                if(!title) { btnSave.innerText = "Simpan Foto"; btnSave.disabled = false; return alert("Keterangan foto wajib diisi!"); }
+                
+                const { error } = id ? 
+                    await supabaseClient.from('activities_gallery').update({ title, image_url: finalImgUrl }).eq('id', id) : 
+                    await supabaseClient.from('activities_gallery').insert([{ title, image_url: finalImgUrl }]);
+                errorMsg = error;
+            }
+        }
+
+        if(errorMsg) alert("Gagal menyimpan: " + errorMsg.message);
+        else {
+            closeModal();
+            loadAllData(); // Refresh UI
+        }
+    };
+
+    window.editItem = async function(type, id) {
+        openModal(type);
+        modalId.value = id;
+        modalTitle.innerText = "Edit " + (type === 'project' ? "Projek" : type === 'gallery' ? "Galeri" : "Data");
+
+        const tableName = type === 'project' ? 'projects' : type === 'gallery' ? 'activities_gallery' : 'skills_and_hobbies';
+        const { data, error } = await supabaseClient.from(tableName).select('*').eq('id', id).single();
+        
+        if (data && !error) {
+            if (type === 'project') {
+                document.getElementById("modal-title-input").value = data.title;
+                document.getElementById("modal-desc").value = data.description;
+                document.getElementById("modal-existing-img").value = data.image_url;
+                document.getElementById("modal-link").value = data.link || "";
+            } else if (type === 'gallery') {
+                document.getElementById("modal-title-input").value = data.title;
+                document.getElementById("modal-existing-img").value = data.image_url;
+            }
+        }
+    };
+
+    window.deleteItem = async function(tableName, id) {
+        if(!confirm("Yakin ingin menghapus item ini?")) return;
+        const { error } = await supabaseClient.from(tableName).delete().eq('id', id);
+        if(error) alert("Gagal menghapus!");
+        else loadAllData();
+    };
 
 });
