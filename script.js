@@ -82,10 +82,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 3. THEME TOGGLE (Light/Dark Mode)
     const themeToggleBtn = document.getElementById("theme-toggle");
+    
+    const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+    const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+
     const currentTheme = localStorage.getItem("theme") || "dark";
     if (currentTheme === "light") {
         document.documentElement.setAttribute("data-theme", "light");
-        themeToggleBtn.innerText = "Light Mode";
+        themeToggleBtn.innerHTML = sunIcon;
+    } else {
+        themeToggleBtn.innerHTML = moonIcon;
     }
 
     themeToggleBtn.addEventListener("click", () => {
@@ -93,16 +99,42 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (theme === "light") {
             document.documentElement.removeAttribute("data-theme");
             localStorage.setItem("theme", "dark");
-            themeToggleBtn.innerText = "Dark Mode";
+            themeToggleBtn.innerHTML = moonIcon;
         } else {
             document.documentElement.setAttribute("data-theme", "light");
             localStorage.setItem("theme", "light");
-            themeToggleBtn.innerText = "Light Mode";
+            themeToggleBtn.innerHTML = sunIcon;
         }
     });
 
-    // 4. FORM VALIDATION
+    // 4. FORM VALIDATION & MESSAGE LIST
     const contactForm = document.getElementById("contact-form");
+    const messagesContainer = document.getElementById("messages-container");
+    
+    // Fungsi render pesan
+    function renderMessages() {
+        const savedMessages = JSON.parse(localStorage.getItem("portfolio_messages")) || [];
+        if (savedMessages.length === 0) {
+            messagesContainer.innerHTML = "";
+            return;
+        }
+        
+        let htmlContent = "<h3>Pesan Terkirim:</h3>";
+        savedMessages.forEach(msg => {
+            htmlContent += `
+                <div class="message-item">
+                    <strong>${msg.name}</strong><br>
+                    <span style="font-size: 0.9rem; color: var(--text-secondary);">${msg.date}</span>
+                    <p style="margin-top: 0.5rem; color: var(--text-primary);">${msg.message}</p>
+                </div>
+            `;
+        });
+        messagesContainer.innerHTML = htmlContent;
+    }
+
+    // Render pesan saat pertama kali dimuat
+    renderMessages();
+
     if (contactForm) {
         contactForm.addEventListener("submit", function(event) {
             event.preventDefault(); // Mencegah reload halaman
@@ -114,13 +146,58 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (nameInput === "" || messageInput === "") {
                 alert("Peringatan: Kolom Nama dan Pesan tidak boleh kosong!");
             } else {
+                // Simpan ke localStorage
+                const savedMessages = JSON.parse(localStorage.getItem("portfolio_messages")) || [];
+                const newMessage = {
+                    name: nameInput,
+                    message: messageInput,
+                    date: new Date().toLocaleString("id-ID")
+                };
+                savedMessages.unshift(newMessage); // Tambah di paling atas
+                localStorage.setItem("portfolio_messages", JSON.stringify(savedMessages));
+                
                 alert("Pesan berhasil dikirim!");
                 contactForm.reset();
+                renderMessages(); // Update tampilan daftar pesan
             }
         });
     }
 
-    // 5. FETCH DATA DARI SUPABASE
+    // 5. GLOBAL MODAL LOGIC
+    const modal = document.getElementById("detail-modal");
+    const closeModalBtn = document.getElementById("close-modal");
+    const modalImg = document.getElementById("modal-img");
+    const modalTitle = document.getElementById("modal-title");
+    const modalDesc = document.getElementById("modal-desc");
+
+    window.openModal = function(title, desc, imgSrc) {
+        modalTitle.innerText = title;
+        modalDesc.innerText = desc;
+        
+        if(imgSrc) {
+            modalImg.src = imgSrc;
+            modalImg.style.display = "block";
+        } else {
+            modalImg.style.display = "none";
+        }
+        
+        modal.classList.add("show");
+    };
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener("click", () => {
+            modal.classList.remove("show");
+        });
+    }
+
+    // Tutup modal jika klik di luar area modal content
+    window.addEventListener("click", (e) => {
+        if (e.target === modal) {
+            modal.classList.remove("show");
+        }
+    });
+
+    // 6. FETCH DATA DARI SUPABASE
     if (supabaseClient) {
         console.log("Menghubungkan ke Supabase...");
         await fetchProjects();
@@ -158,11 +235,12 @@ async function fetchProjects() {
                 const desc = project.deskripsi || project.description || '';
                 
                 const card = `
-                    <div class="project-card glass-card fade-in">
+                    <div class="project-card glass-card fade-in" style="cursor: pointer;" onclick="openModal('${title.replace(/'/g, "\\'")}', '${desc.replace(/'/g, "\\'").replace(/\n/g, " ")}', '${imgUrl}')">
                         ${imgUrl ? `<img src="${imgUrl}" alt="${title}" style="width: 100%; height: 200px; object-fit: cover; border-bottom: 1px solid rgba(255,255,255,0.1);">` : '<div class="project-img-placeholder"></div>'}
                         <div class="project-info">
                             <h3>${title}</h3>
-                            <p>${desc}</p>
+                            <p>${desc.substring(0, 60)}${desc.length > 60 ? '...' : ''}</p>
+                            <span style="display:inline-block; margin-top:10px; color:var(--accent-cyan); font-size:0.9rem;">Lihat Detail &rarr;</span>
                         </div>
                     </div>
                 `;
@@ -191,7 +269,7 @@ async function fetchGallery() {
                 const title = item.title || '';
                 
                 const card = `
-                    <div class="gallery-item glass-card fade-in">
+                    <div class="gallery-item glass-card fade-in" style="cursor: pointer;" onclick="openModal('${title.replace(/'/g, "\\'")}', '', '${imgUrl}')">
                         ${imgUrl ? `<img src="${imgUrl}" alt="${title}" style="width: 100%; height: 180px; object-fit: cover; border-radius: 12px; margin-bottom: 1rem;">` : '<div class="gallery-img-placeholder"></div>'}
                         <p>${title}</p>
                     </div>
